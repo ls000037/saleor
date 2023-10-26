@@ -36,6 +36,7 @@ class OrderErrorCode(Enum):
     CHANNEL_INACTIVE = "channel_inactive"
     SUPPLIER_NOT_FOUND = "supplier_not_found"
     PREPAY_ID_NOT_FOUND = "prepay_id_not_found"
+    INVALID_VOUCHER = "invalid_voucher"
 
 
 class OrderGrantRefundCreateErrorCode(Enum):

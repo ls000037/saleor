@@ -6363,3 +6363,94 @@ saleor.core.exceptions.PermissionDenied: To access this path, you need one of th
 [26/Oct/2023 01:20:41] "GET / HTTP/1.0" 200 51608
 2023-10-26 01:23:07,554 WARNING django.request Not Found: /c/ [PID:4186129:Thread-8]
 [26/Oct/2023 01:23:07] "GET /c/ HTTP/1.0" 404 3681
+2023-10-26 01:42:28,917 INFO django.utils.autoreload /home/ubuntu/saleor/saleor/graphql/order/mutations/draft_order_create.py changed, reloading. [PID:4186129:MainThread]
+2023-10-26 01:42:31,394 INFO django.utils.autoreload Watching for file changes with StatReloader [PID:6814:MainThread]
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.9/threading.py", line 980, in _bootstrap_inner
+    self.run()
+  File "/usr/local/lib/python3.9/threading.py", line 917, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/ubuntu/saleor/env/lib/python3.9/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/home/ubuntu/saleor/env/lib/python3.9/site-packages/django/core/management/commands/runserver.py", line 110, in inner_run
+    autoreload.raise_last_exception()
+  File "/home/ubuntu/saleor/env/lib/python3.9/site-packages/django/utils/autoreload.py", line 87, in raise_last_exception
+    raise _exception[1]
+  File "/home/ubuntu/saleor/env/lib/python3.9/site-packages/django/core/management/__init__.py", line 375, in execute
+    autoreload.check_errors(django.setup)()
+  File "/home/ubuntu/saleor/env/lib/python3.9/site-packages/django/utils/autoreload.py", line 64, in wrapper
+    fn(*args, **kwargs)
+  File "/home/ubuntu/saleor/env/lib/python3.9/site-packages/django/__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "/home/ubuntu/saleor/env/lib/python3.9/site-packages/django/apps/registry.py", line 122, in populate
+    app_config.ready()
+  File "/home/ubuntu/saleor/saleor/plugins/apps.py", line 20, in ready
+    self.load_and_check_plugin(plugin_path)
+  File "/home/ubuntu/saleor/saleor/plugins/apps.py", line 24, in load_and_check_plugin
+    plugin = import_string(plugin_path)
+  File "/home/ubuntu/saleor/env/lib/python3.9/site-packages/django/utils/module_loading.py", line 17, in import_string
+    module = import_module(module_path)
+  File "/usr/local/lib/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 972, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+  File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+  File "/home/ubuntu/saleor/saleor/plugins/avatax/__init__.py", line 17, in <module>
+    from ...checkout.utils import is_shipping_required
+  File "/home/ubuntu/saleor/saleor/checkout/utils.py", line 27, in <module>
+    from ..giftcard.utils import (
+  File "/home/ubuntu/saleor/saleor/giftcard/utils.py", line 16, in <module>
+    from ..order.actions import OrderFulfillmentLineInfo, create_fulfillments
+  File "/home/ubuntu/saleor/saleor/order/actions.py", line 17, in <module>
+    from ..payment import (
+  File "/home/ubuntu/saleor/saleor/payment/gateway.py", line 25, in <module>
+    from .utils import (
+  File "/home/ubuntu/saleor/saleor/payment/utils.py", line 19, in <module>
+    from ..checkout.actions import transaction_amounts_for_checkout_updated
+  File "/home/ubuntu/saleor/saleor/checkout/actions.py", line 5, in <module>
+    from ..plugins.manager import PluginsManager
+  File "/home/ubuntu/saleor/saleor/plugins/manager.py", line 29, in <module>
+    from ..core.payments import PaymentInterface
+  File "/home/ubuntu/saleor/saleor/core/payments.py", line 4, in <module>
+    from ..checkout.fetch import CheckoutInfo, CheckoutLineInfo
+  File "/home/ubuntu/saleor/saleor/checkout/fetch.py", line 20, in <module>
+    from ..shipping.interface import ShippingMethodData
+  File "/home/ubuntu/saleor/saleor/shipping/interface.py", line 9, in <module>
+    from ..graphql.core.utils import from_global_id_or_error
+  File "/home/ubuntu/saleor/saleor/graphql/core/__init__.py", line 3, in <module>
+    from . import fields  # noqa
+  File "/home/ubuntu/saleor/saleor/graphql/core/fields.py", line 11, in <module>
+    from ..decorators import one_of_permissions_required
+  File "/home/ubuntu/saleor/saleor/graphql/decorators.py", line 22, in <module>
+    from .utils import get_user_or_app_from_context
+  File "/home/ubuntu/saleor/saleor/graphql/utils/__init__.py", line 24, in <module>
+    from ..core.enums import PermissionEnum
+  File "/home/ubuntu/saleor/saleor/graphql/core/enums.py", line 23, in <module>
+    from ...order import error_codes as order_error_codes
+  File "/home/ubuntu/saleor/saleor/order/error_codes.py", line 37
+    <<<<<<< HEAD
+    ^
+SyntaxError: invalid syntax
+2023-10-26 01:43:55,743 INFO django.utils.autoreload /home/ubuntu/saleor/saleor/order/error_codes.py changed, reloading. [PID:6814:MainThread]
+2023-10-26 01:44:00,954 WARNING saleor.core.jwt_manager RSA_PRIVATE_KEY is missing. Using temporary key for local development with DEBUG mode. [PID:7183:MainThread]
+2023-10-26 01:44:01,005 INFO django.utils.autoreload Watching for file changes with StatReloader [PID:7183:MainThread]
+Performing system checks...
+
+System check identified no issues (0 silenced).
+
+You have 1 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): discount.
+Run 'python manage.py migrate' to apply them.
+October 26, 2023 - 01:44:02
+Django version 3.2.22, using settings 'saleor.settings'
+Starting development server at http://0.0.0.0:8008/
+Quit the server with CONTROL-C.
+2023-10-26 01:44:02,282 ERROR django.security.DisallowedHost Invalid HTTP_HOST header: <SimpleLazyObject: '*'>. The domain name provided is not valid according to RFC 1034/1035. [PID:7183:django-main-thread]
+2023-10-26 01:44:02,576 WARNING django.request Bad Request: /graphql/ [PID:7183:django-main-thread]
