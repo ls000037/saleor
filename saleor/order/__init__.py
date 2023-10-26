@@ -5,6 +5,50 @@ if TYPE_CHECKING:
     from .models import FulfillmentLine
 
 
+class OrderType:
+    # 物流类
+    LOGISTICS = "logistics"
+    # 核销
+    REDEMPTION = "redemption"
+    # 非核销类
+    NON_REDEMPTION = "non_redemption"
+    # 积分补差
+    INTEGRAL = "integral"
+    # 其他
+    OTHER = "other"
+    # 高管体检类
+    CHECKUP_MANAGER = "checkup_manager"
+    # 普通体检类
+    CHECKUP = "checkup"
+    # 自提
+    SELF_PICKUP = "self_pickup"
+    CHOICES = [
+        (LOGISTICS, "Logistics"),
+        (REDEMPTION, "Redemption"),
+        (NON_REDEMPTION, "Non redemption"),
+        (INTEGRAL, "Integral"),
+        (OTHER, "Other"),
+        (CHECKUP_MANAGER, "Checkup manager"),
+        (CHECKUP, "Checkup"),
+        (SELF_PICKUP, "Self pickup"),
+    ]
+
+
+# 售后状态
+class OrderLineStatus:
+    # 正常，没有售后
+    NORMAL = "N"
+    # 售后中
+    AFTER_SALE = "A"
+    # 售后完成
+    FINISHED = "F"
+    CHOICES = [
+        (NORMAL, "N"),
+        (AFTER_SALE, "A"),
+        (FINISHED, "F"),
+    ]
+
+
 class OrderStatus:
     DRAFT = "draft"  # fully editable, not finalized order created by staff users
     UNCONFIRMED = (
@@ -22,7 +66,8 @@ class OrderStatus:
     RETURNED = "returned"  # order with all items marked as returned
     CANCELED = "canceled"  # permanently canceled order
     EXPIRED = "expired"  # order marked as expired
-
+    PAID = "PAID"
+    UNPAID = "UNPAID"
     CHOICES = [
         (DRAFT, "Draft"),
         (UNCONFIRMED, "Unconfirmed"),
@@ -33,6 +78,8 @@ class OrderStatus:
         (FULFILLED, "Fulfilled"),
         (CANCELED, "Canceled"),
         (EXPIRED, "Expired"),
+        (PAID, "Paid"),
+        (UNPAID, "Unpaid"),
     ]
 
 

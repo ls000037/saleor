@@ -44,6 +44,7 @@ from ..discount.utils import (
 from ..graphql.checkout.utils import (
     prepare_insufficient_stock_checkout_validation_error,
 )
+from saleor.order import OrderType
 from ..order import OrderOrigin, OrderStatus
 from ..order.actions import mark_order_as_paid_with_payment, order_created
 from ..order.fetch import OrderInfo, OrderLineInfo
@@ -87,6 +88,7 @@ from .fetch import (
     CheckoutLineInfo,
     fetch_checkout_info,
     fetch_checkout_lines,
+    retrieve_selected_checkout_items,
 )
 from .models import Checkout
 from .utils import (
@@ -290,16 +292,21 @@ def _create_line_for_order(
         quantity=quantity,
         variant=variant,
         unit_price=unit_price,  # money field not supported by mypy_django_plugin
-        undiscounted_unit_price=undiscounted_unit_price,  # money field not supported by mypy_django_plugin # noqa: E501
-        undiscounted_total_price=undiscounted_total_price,  # money field not supported by mypy_django_plugin # noqa: E501
+        undiscounted_unit_price=undiscounted_unit_price,
+        # money field not supported by mypy_django_plugin # noqa: E501
+        undiscounted_total_price=undiscounted_total_price,
+        # money field not supported by mypy_django_plugin # noqa: E501
         total_price=total_line_price,
         tax_rate=tax_rate,
         voucher_code=voucher_code,
-        unit_discount=discount_amount,  # money field not supported by mypy_django_plugin # noqa: E501
+        unit_discount=discount_amount,
+        # money field not supported by mypy_django_plugin # noqa: E501
         unit_discount_reason=unit_discount_reason,
         unit_discount_value=discount_amount.amount,  # we store value as fixed discount
-        base_unit_price=base_unit_price,  # money field not supported by mypy_django_plugin # noqa: E501
-        undiscounted_base_unit_price=undiscounted_base_unit_price,  # money field not supported by mypy_django_plugin # noqa: E501
+        base_unit_price=base_unit_price,
+        # money field not supported by mypy_django_plugin # noqa: E501
+        undiscounted_base_unit_price=undiscounted_base_unit_price,
+        # money field not supported by mypy_django_plugin # noqa: E501
         metadata=checkout_line.metadata,
         private_metadata=checkout_line.private_metadata,
         **get_tax_class_kwargs_for_order_line(tax_class),
@@ -1250,11 +1257,13 @@ def _create_order_from_checkout(
 
 def create_order_from_checkout(
     checkout_info: CheckoutInfo,
+
     manager: "PluginsManager",
     user: Optional["User"],
     app: Optional["App"],
     delete_checkout: bool = True,
     metadata_list: Optional[List] = None,
+
     private_metadata_list: Optional[List] = None,
 ) -> Order:
     """Crate order from checkout.
@@ -1290,6 +1299,81 @@ def create_order_from_checkout(
         # Fetching checkout info inside the transaction block with select_for_update
         # ensure that we are processing checkout on the current data.
         checkout_lines, _ = fetch_checkout_lines(checkout, voucher=voucher)
+        checkout_info = fetch_checkout_info(
+            checkout, checkout_lines, manager, voucher=voucher
+        )
+        assign_checkout_user(user, checkout_info)
+
+        try:
+            order = _create_order_from_checkout(
+                checkout_info=checkout_info,
+                checkout_lines_info=list(checkout_lines),
+                manager=manager,
+                user=user,
+                app=app,
+                metadata_list=metadata_list,
+                private_metadata_list=private_metadata_list,
+            )
+            if delete_checkout:
+                checkout_info.checkout.delete()
+            return order
+        except InsufficientStock:
+            release_voucher_usage(
+                checkout_info.voucher, checkout_info.checkout.get_customer_email()
+            )
+            raise
+        except GiftCardNotApplicable:
+            release_voucher_usage(
+                checkout_info.voucher, checkout_info.checkout.get_customer_email()
+            )
+            raise
+
+
+def create_order_from_checkout_new(
+    checkout_info: CheckoutInfo,
+    checkout_lines: Iterable["CheckoutLineInfo"],
+    manager: "PluginsManager",
+    user: Optional["User"],
+    app: Optional["App"],
+    delete_checkout: bool = True,
+    metadata_list: Optional[List] = None,
+    # order_type: Optional[OrderType] = None,
+    private_metadata_list: Optional[List] = None,
+) -> Order:
+    """Crate order from checkout.
+
+    If checkout doesn't have all required data, the function will raise ValidationError.
+
+    Each order will get a private copy of both the billing and the shipping
+    address (if shipping).
+
+    If any of the addresses is new and the user is logged in the address
+    will also get saved to that user's address book.
+
+    Current user's language is saved in the order so we can later determine
+    which language to use when sending email.
+
+    Checkout can be deleted by setting flag `delete_checkout` to True
+
+    :raises: InsufficientStock, GiftCardNotApplicable
+    """
+
+    voucher = None
+    if voucher := checkout_info.voucher:
+        with transaction.atomic():
+            _increase_voucher_usage(checkout_info=checkout_info)
+
+    with transaction.atomic():
+        checkout_pk = checkout_info.checkout.pk
+        checkout = Checkout.objects.select_for_update().filter(pk=checkout_pk).first()
+        if not checkout:
+            order = Order.objects.get_by_checkout_token(checkout_pk)
+            return order
+
+        # Fetching checkout info inside the transaction block with select_for_update
+        # ensure that we are processing checkout on the current data.
+        # checkout_lines, _ = fetch_checkout_lines(checkout, voucher=voucher)
+        # checkout_lines, _ = retrieve_selected_checkout_items(checkout_lines,checkout, voucher=voucher)
         checkout_info = fetch_checkout_info(
             checkout, checkout_lines, manager, voucher=voucher
         )
@@ -1557,7 +1641,7 @@ def _reserve_stocks_without_availability_check(
                 Reservation(
                     quantity_reserved=line.line.quantity,
                     reserved_until=timezone.now()
-                    + timedelta(seconds=settings.RESERVE_DURATION),
+                                   + timedelta(seconds=settings.RESERVE_DURATION),
                     stock=variants_stocks_map[line.variant.id],
                     checkout_line=line.line,
                 )

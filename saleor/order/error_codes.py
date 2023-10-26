@@ -34,6 +34,8 @@ class OrderErrorCode(Enum):
     DUPLICATED_INPUT_ITEM = "duplicated_input_item"
     NOT_AVAILABLE_IN_CHANNEL = "not_available_in_channel"
     CHANNEL_INACTIVE = "channel_inactive"
+    SUPPLIER_NOT_FOUND = "supplier_not_found"
+    PREPAY_ID_NOT_FOUND = "prepay_id_not_found"
 
 
 class OrderGrantRefundCreateErrorCode(Enum):

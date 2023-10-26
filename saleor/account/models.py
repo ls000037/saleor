@@ -315,6 +315,63 @@ class User(
         )
 
 
+class Supplier(models.Model):
+    SUPPLIER_STATUS = (
+        ('C', 'Created'),
+        ('A', 'Approving'),
+        ('P', 'Passed'),
+        ('R', 'Rejected'),
+    )
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, db_index=True
+    )
+    name = models.CharField(max_length=30, blank=True, null=True, unique=True)
+    tax_number = models.CharField(max_length=30, blank=True, null=True)
+    business_scope = models.TextField(blank=True, null=True)
+
+    after_sale_name = models.CharField(max_length=20, blank=True)
+    after_sale_phone = models.CharField(max_length=15, blank=True)
+
+    contact_name = models.CharField(max_length=20, blank=True)
+    phone = models.CharField(max_length=15)
+    email = models.EmailField(max_length=30, blank=True)
+    id_front = models.CharField(max_length=256, blank=True, null=True)
+    id_behind = models.CharField(max_length=256, blank=True, null=True)
+    author_letter = models.CharField(max_length=256, blank=True, null=True)
+
+    legal_id = models.CharField(max_length=20, blank=True)
+    legal_id_front = models.CharField(max_length=256, blank=True, null=True)
+    legal_id_behind = models.CharField(max_length=256, blank=True, null=True)
+    bankcard = models.CharField(max_length=30, blank=True)
+    bankname = models.CharField(max_length=256, blank=True)
+    sub_bankname = models.CharField(max_length=256, blank=True)
+    currency = models.CharField(max_length=15, blank=True)
+    country = models.CharField(max_length=30, blank=True)
+
+    product_info = models.TextField(blank=True)
+    product_safe_report = models.CharField(max_length=256, blank=True, null=True)
+
+    business_license = models.CharField(max_length=256, blank=True, null=True)
+    cert_qa = models.CharField(max_length=256, blank=True, null=True)
+    office_picture = models.CharField(max_length=256, blank=True, null=True)
+
+    status = models.CharField(max_length=1, choices=SUPPLIER_STATUS, default='C')
+    is_locked = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=False)
+    date = models.DateTimeField(db_index=True, auto_now_add=True)
+
+    class Meta:
+        ordering = ("-date",)
+        permissions = (
+            (AccountPermissions.MANAGE_SUPPLIERS.codename, "Manage suppliers."),
+        )
+
+    @classmethod
+    def get_default_supplier(self):
+        return Supplier.objects.get(name="美沃集")
+
+
 class CustomerNote(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.SET_NULL

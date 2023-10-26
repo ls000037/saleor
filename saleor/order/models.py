@@ -134,6 +134,14 @@ class Order(ModelWithMetadata, ModelWithExternalReference):
         related_name="orders",
         on_delete=models.SET_NULL,
     )
+    supplier = models.ForeignKey(
+        "account.Supplier",
+        blank=True,
+        null=True,
+        related_name="orders",
+        on_delete=models.SET_NULL,
+        db_index=True,
+    )
     language_code = models.CharField(
         max_length=35, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE
     )

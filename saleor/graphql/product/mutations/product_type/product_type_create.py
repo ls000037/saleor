@@ -16,6 +16,7 @@ from ....plugins.dataloaders import get_plugin_manager_promise
 from ...enums import ProductTypeKindEnum
 from ...types import ProductType
 from ..utils import clean_tax_code
+from .....account.models import Supplier
 
 
 class ProductTypeInput(BaseInputObjectType):
@@ -42,6 +43,7 @@ class ProductTypeInput(BaseInputObjectType):
         ),
         name="variantAttributes",
     )
+    supplier = graphene.ID(required=False, description="ID of the product's supplier.")
     is_shipping_required = graphene.Boolean(
         description="Determines if shipping is required for products of this variant."
     )
@@ -97,7 +99,9 @@ class ProductTypeCreate(ModelMutation):
     def clean_input(cls, info: ResolveInfo, instance, data, **kwargs):
         cleaned_input = super().clean_input(info, instance, data, **kwargs)
         cleaned_input["kind"] = cls.clean_product_kind(instance, cleaned_input)
-
+        # 商品类型创建默认添加到平台供应商
+        if not cleaned_input.get("supplier"):
+            cleaned_input["supplier"] = Supplier.get_default_supplier()
         weight = cleaned_input.get("weight")
         if weight and weight.value < 0:
             raise ValidationError(

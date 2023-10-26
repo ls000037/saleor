@@ -340,10 +340,12 @@ class VariantPromotionRuleInfoByCheckoutLineIdLoader(DataLoader):
                                             promotion=rule_id_to_promotion_map[
                                                 listing_rule.promotion_rule_id
                                             ],
-                                            rule_translation=rule_id_to_rule_translation[
+                                            rule_translation=
+                                            rule_id_to_rule_translation[
                                                 listing_rule.promotion_rule_id
                                             ],
-                                            promotion_translation=rule_id_to_promotion_translation[
+                                            promotion_translation=
+                                            rule_id_to_promotion_translation[
                                                 listing_rule.promotion_rule_id
                                             ],
                                         )
@@ -454,6 +456,7 @@ class CheckoutInfoByCheckoutTokenLoader(DataLoader[str, CheckoutInfo]):
                         self.context
                     ).load_many(channel_slugs)
                 )
+
                 collection_point_ids = [
                     checkout.collection_point_id
                     for checkout in checkouts

@@ -269,7 +269,7 @@ class ProductVariantQueryset(models.QuerySet):
             available_quantity=Case(
                 When(quantity_allocated=None, then=F("quantity")),
                 default=F("quantity")
-                - Coalesce(
+                        - Coalesce(
                     Subquery(allocations_subquery, output_field=models.IntegerField()),
                     Value(0),
                 ),

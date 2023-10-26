@@ -16,14 +16,16 @@ from ....channel.utils import clean_channel
 from ....core import ResolveInfo
 from ....core.doc_category import DOC_CATEGORY_USERS
 from ....core.enums import LanguageCodeEnum
-from ....core.mutations import ModelMutation
-from ....core.types import AccountError, NonNullList
+from ....core.mutations import ModelMutation, ModelWithExtRefMutation, \
+    ModelDeleteMutation
+from ....core.types import AccountError, NonNullList, BaseInputObjectType
 from ....core.utils import WebhookEventInfo
 from ....meta.inputs import MetadataInput
 from ....plugins.dataloaders import get_plugin_manager_promise
 from ....site.dataloaders import get_site_promise
-from ...types import User
+from ...types import User, Supplier
 from .base import AccountBaseInput
+from .....permission.enums import AccountPermissions
 
 
 class AccountRegisterInput(AccountBaseInput):
@@ -157,7 +159,8 @@ class AccountRegister(ModelMutation):
         redirect_url = cleaned_input.get("redirect_url")
 
         with traced_atomic_transaction():
-            user.is_confirmed = False
+            # 开启/关闭 注册自动确认
+            user.is_confirmed = True
             if site.settings.enable_account_confirmation_by_email:
                 user.save()
 
@@ -192,3 +195,200 @@ class AccountRegister(ModelMutation):
 
             cls.call_event(manager.customer_created, user)
         account_events.customer_account_created_event(user=user)
+
+
+class SupplierUpdateInput(BaseInputObjectType):
+    name = graphene.String(
+        required=False,
+        description=("company name of the supplier.")
+    )
+    tax_number = graphene.String(
+        required=False,
+        description=("company tax code of the supplier.")
+    )
+    business_scope = graphene.String(
+        required=False,
+        description=("company ranges of the supplier.")
+    )
+
+    after_sale_name = graphene.String(
+        required=False,
+        description=("after sale name of the supplier.")
+    )
+    after_sale_phone = graphene.String(
+        required=False,
+        description=("after sale phone of the supplier.")
+    )
+
+    contact_name = graphene.String(
+        required=False,
+        description=("contact name of the supplier.")
+    )
+    phone = graphene.String(required=False, description=("phone of the supplier."))
+    email = graphene.String(required=False, description=("email of the supplier."))
+
+    id_front = graphene.String(
+        required=False,
+        description=("company ranges of the supplier.")
+    )
+    id_behind = graphene.String(
+        required=False,
+        description=("company ranges of the supplier.")
+    )
+    author_letter = graphene.String(
+        required=False,
+        description=("company ranges of the supplier.")
+    )
+
+    legal_id = graphene.String(required=False, description=("phone of the supplier."))
+    legal_id_front = graphene.String(
+        required=False,
+        description=("company ranges of the supplier.")
+    )
+    legal_id_behind = graphene.String(
+        required=False,
+        description=("company ranges of the supplier.")
+    )
+
+    bankcard = graphene.String(required=False,
+                               description=("bankcard of the supplier."))
+    bankname = graphene.String(required=False,
+                               description=("bankname of the supplier."))
+    sub_bankname = graphene.String(
+        required=False,
+        description=("alt bankname of the supplier.")
+    )
+    currency = graphene.String(required=False,
+                               description=("currency of the supplier."))
+    country = graphene.String(required=False, description=("contury of the supplier."))
+
+    product_info = graphene.String(required=False,
+                                   description=("product info of the supplier."))
+    product_safe_report = graphene.String(required=False,
+                                          description=("status the supplier."))
+    business_license = graphene.String(
+        required=False,
+        description=("company ranges of the supplier.")
+    )
+    cert_qa = graphene.String(required=False, description=("status the supplier."))
+    office_picture = graphene.String(required=False,
+                                     description=("status the supplier."))
+    is_locked = graphene.Boolean(
+        description=("whether the supplier is locked to change."))
+    status = graphene.String(required=False, description=("status the supplier."))
+    # is_approved = graphene.Boolean(description=("whether the supplier is approvaled."))
+    is_active = graphene.Boolean(description=("whether the supplier is actived."))
+
+
+class SupplierCreateInput(SupplierUpdateInput):
+    user = graphene.ID(
+        description="ID of the account.", name="user",
+        required=True
+    )
+
+    name = graphene.String(
+        required=False,
+        description=("company name of the supplier.")
+    )
+    phone = graphene.String(required=False, description=("phone of the supplier."))
+    tax_number = graphene.String(
+        required=False,
+        description=("company tax code of the supplier.")
+    )
+
+
+class SupplierCreate(ModelMutation):
+    class Arguments:
+        input = SupplierCreateInput(
+            required=True,
+            description="Fields required to create a "
+                        "supplier's register info."
+        )
+
+    class Meta:
+        description = "Creates a new comment."
+        model = models.Supplier
+        object_type = Supplier
+        # permissions = (AccountPermissions.MANAGE_SUPPLIERS,)
+        error_type_class = AccountError
+
+    @classmethod
+    def clean_input(cls, info: ResolveInfo, instance, data, **kwargs):
+        if models.Supplier.objects.filter(name=data.get("name")):
+            raise ValidationError(
+                {
+                    "name": ValidationError(
+                        "This supplier name is existed.",
+                        code=AccountErrorCode.UNIQUE.value
+                    )
+                }
+            )
+        if models.Supplier.objects.filter(tax_number=data.get("tax_number")):
+            raise ValidationError(
+                {
+                    "tax_number": ValidationError(
+                        "This supplier tax number is existed.",
+                        code=AccountErrorCode.UNIQUE.value
+                    )
+                }
+            )
+        if models.Supplier.objects.filter(phone=data.get("phone")):
+            raise ValidationError(
+                {
+                    "phone": ValidationError(
+                        "This supplier phone is existed.",
+                        code=AccountErrorCode.UNIQUE.value
+                    )
+                }
+            )
+    # @classmethod
+    # def perform_mutation(  # type: ignore[override]
+    #         cls, _root, info: ResolveInfo, /, input,
+    # ):
+    #     instance = cls.get_instance(info, **input)
+    #     # cleaned_input 会把文件字段解析成数据对象；使用cleaned_input则不需要使用info.context.FILES.get
+    #     cleaned_input = cls.clean_input(info, instance, input)
+    #     # content_data = info.context.FILES.get(cleaned_input["product_safe_report"])
+    #     # cleaned_input["product_safe_report"] = content_data
+    #     metadata_list = cleaned_input.pop("metadata", None)
+    #     private_metadata_list = cleaned_input.pop("private_metadata", None)
+    #     instance = cls.construct_instance(instance, cleaned_input)
+    #     cls.validate_and_update_metadata(
+    #         instance, metadata_list, private_metadata_list
+    #     )
+    #     cls.clean_instance(info, instance)
+    #     cls.save(info, instance, cleaned_input)
+    #     return cls.success_response(instance)
+
+
+class SupplierUpdate(SupplierCreate, ModelWithExtRefMutation):
+    class Arguments:
+        id = graphene.ID(required=False, description="ID of a supplier info to update.")
+        external_reference = graphene.String(
+            required=False,
+            description=f"External ID of a supplier "
+                        f"to update.", )
+        input = SupplierUpdateInput(
+            required=True,
+            description="Fields required to update a "
+                        "supplier's register info."
+        )
+
+    class Meta:
+        description = "updates a supplier info."
+        model = models.Supplier
+        object_type = Supplier
+        permissions = (AccountPermissions.MANAGE_SUPPLIERS,)
+        error_type_class = AccountError
+
+
+class SupplierDelete(ModelDeleteMutation):
+    class Arguments:
+        id = graphene.ID(required=True, description="ID of a supplier to delete.")
+
+    class Meta:
+        description = "Delete a supplier."
+        model = models.Supplier
+        object_type = Supplier
+        permissions = (AccountPermissions.MANAGE_SUPPLIERS,)
+        error_type_class = AccountError

@@ -5,7 +5,7 @@ from django.db.models import Q, Value
 from django.db.models.functions import Concat
 from graphene.utils.str_converters import to_camel_case
 
-from ...account.models import Group, User
+from ...account.models import Group, User,Supplier
 from ...core.exceptions import PermissionDenied
 from ...permission.auth_filters import AuthorizationFilters
 from ...permission.enums import AccountPermissions
@@ -131,6 +131,10 @@ def get_groups_which_user_can_manage(user: "User") -> List[Group]:
 
     return editable_groups
 
+def get_user_supplier(
+        user: User, supplier_queryset=Supplier.objects.all()
+) -> Optional[Supplier]:
+    return supplier_queryset.filter(user=user).first()
 
 def get_not_manageable_permissions_when_deactivate_or_remove_users(users: List["User"]):
     """Return permissions that cannot be managed after deactivating or removing users.

@@ -9,12 +9,13 @@ from ....checkout.utils import (
 from ....core.tracing import traced_atomic_transaction
 from ....webhook.event_types import WebhookEventAsyncType
 from ...account.types import AddressInput
+from ....account.models import Address
 from ...core import ResolveInfo
 from ...core.descriptions import ADDED_IN_34, ADDED_IN_35, DEPRECATED_IN_3X_INPUT
 from ...core.doc_category import DOC_CATEGORY_CHECKOUT
 from ...core.scalars import UUID
 from ...core.types import CheckoutError
-from ...core.utils import WebhookEventInfo
+from ...core.utils import WebhookEventInfo, from_global_id_or_error
 from ...plugins.dataloaders import get_plugin_manager_promise
 from ..types import Checkout
 from .checkout_create import CheckoutAddressValidationRules
@@ -41,7 +42,13 @@ class CheckoutBillingAddressUpdate(CheckoutShippingAddressUpdate):
             ),
         )
         billing_address = AddressInput(
-            required=True, description="The billing address of the checkout."
+            required=False, description="The billing address of the checkout."
+        )
+        billing_address_id = graphene.ID(
+            required=False,
+            description=(
+                f"The ID of the address."
+            ),
         )
         validation_rules = CheckoutAddressValidationRules(
             required=False,
@@ -70,7 +77,8 @@ class CheckoutBillingAddressUpdate(CheckoutShippingAddressUpdate):
         info: ResolveInfo,
         /,
         *,
-        billing_address,
+        billing_address=None,
+        billing_address_id=None,
         validation_rules=None,
         checkout_id=None,
         token=None,
@@ -79,17 +87,22 @@ class CheckoutBillingAddressUpdate(CheckoutShippingAddressUpdate):
         checkout = get_checkout(cls, info, checkout_id=checkout_id, token=token, id=id)
 
         address_validation_rules = validation_rules or {}
-        billing_address = cls.validate_address(
-            billing_address,
-            address_type=AddressType.BILLING,
-            instance=checkout.billing_address,
-            info=info,
-            format_check=address_validation_rules.get("check_fields_format", True),
-            required_check=address_validation_rules.get("check_required_fields", True),
-            enable_normalization=address_validation_rules.get(
-                "enable_fields_normalization", True
-            ),
-        )
+        if billing_address:
+            billing_address = cls.validate_address(
+                billing_address,
+                address_type=AddressType.BILLING,
+                instance=checkout.billing_address,
+                info=info,
+                format_check=address_validation_rules.get("check_fields_format", True),
+                required_check=address_validation_rules.get("check_required_fields",
+                                                            True),
+                enable_normalization=address_validation_rules.get(
+                    "enable_fields_normalization", True
+                ),
+            )
+        if billing_address_id:
+            billing_address = Address.objects.get(
+                id=from_global_id_or_error(billing_address_id)[1])
         manager = get_plugin_manager_promise(info.context).get()
         with traced_atomic_transaction():
             billing_address.save()
@@ -107,7 +120,7 @@ class CheckoutBillingAddressUpdate(CheckoutShippingAddressUpdate):
             )
             checkout.save(
                 update_fields=change_address_updated_fields
-                + invalidate_prices_updated_fields
+                              + invalidate_prices_updated_fields
             )
 
             cls.call_event(manager.checkout_updated, checkout)

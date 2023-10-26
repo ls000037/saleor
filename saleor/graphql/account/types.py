@@ -20,7 +20,7 @@ from ...thumbnail.utils import (
     get_thumbnail_format,
     get_thumbnail_size,
 )
-from ..account.utils import check_is_owner_or_has_one_of_perms
+from ..account.utils import check_is_owner_or_has_one_of_perms,get_user_supplier
 from ..app.dataloaders import AppByIdLoader, get_app_promise
 from ..app.types import App
 from ..channel.dataloaders import ChannelBySlugLoader
@@ -66,6 +66,7 @@ from .dataloaders import (
     CustomerEventsByUserLoader,
     RestrictedChannelAccessByUserIdLoader,
     ThumbnailByUserIdSizeAndFormatLoader,
+    UserByUserIdLoader,
 )
 from .enums import CountryCodeEnum, CustomerEventsEnum
 from .utils import can_user_manage_group, get_groups_which_user_can_manage
@@ -294,6 +295,77 @@ class UserPermission(Permission):
         )
         return groups
 
+class Supplier(ModelObjectType[models.Supplier]):
+    id = graphene.GlobalID(required=True)
+    name = graphene.String(required=False)
+    tax_number = graphene.String(required=False)
+    business_scope = graphene.String(required=False)
+    after_sale_name = graphene.String(required=False)
+    after_sale_phone = graphene.String(required=False)
+
+    contact_name = graphene.String(required=False)
+    phone = graphene.String(required=False)
+    email = graphene.String(required=False)
+    id_front = graphene.String(required=False)
+    id_behind = graphene.String(required=False)
+    author_letter = graphene.String(required=False)
+
+    legal_id = graphene.String(required=False)
+    legal_id_front = graphene.String(required=False)
+    legal_id_behind = graphene.String(required=False)
+
+    bankcard = graphene.String(required=False)
+    bankname = graphene.String(required=False)
+    sub_bankname = graphene.String(required=False)
+    currency = graphene.String(required=False)
+    country = graphene.String(required=False)
+    # is_approved = graphene.Boolean(required=False)
+    product_info = graphene.String(required=False)
+    product_safe_report = graphene.String(required=False)
+
+    business_license = graphene.String(required=False)
+    cert_qa = graphene.String(required=False)
+    office_picture = graphene.String(required=False)
+    date = graphene.DateTime(required=False)
+    status = graphene.String(required=False)
+    is_active = graphene.Boolean(required=False)
+    user = graphene.Field("saleor.graphql.account.types.User", description="user of supplier.")
+    # approvals = NonNullList(Approval, description="approvals of supplier.")
+
+    class Meta:
+        model = models.Supplier
+        interfaces = (relay.Node, ObjectWithMetadata)
+
+    # edit by wangsen; 添加并解析外键字段
+    # @staticmethod
+    # def resolve_approvals(root: models.Supplier, info: ResolveInfo, **kwargs):
+    #     # def _resolve_approvals(approvals):
+    #     #     return create_connection_slice(
+    #     #         approvals, info, kwargs, ApprovalCountableConnection
+    #     #     )
+    #
+    #     # return ApprovalBySupplierIdLoader(info.context).load(root.id).then(_resolve_approvals)
+    #     return ApprovalBySupplierIdLoader(info.context).load(root.id)
+
+    @staticmethod
+    def resolve_user(root: models.Supplier, info):
+        if not root.user_id:
+            return None
+        user_or_app = get_user_or_app_from_context(info.context)
+        if not user_or_app:
+            return None
+        requester = user_or_app
+
+        def _resolve_user(event_user):
+            if (
+                    requester == event_user
+                    or requester.has_perm(AccountPermissions.MANAGE_USERS)
+                    or requester.has_perm(AccountPermissions.MANAGE_STAFF)
+            ):
+                return event_user
+            return None
+
+        return UserByUserIdLoader(info.context).load(root.user_id).then(_resolve_user)
 
 @federated_entity("id")
 @federated_entity("email")
@@ -306,6 +378,7 @@ class User(ModelObjectType[models.User]):
     last_name = graphene.String(
         required=True, description="The family name of the address."
     )
+    is_supplier = graphene.Boolean(required=True)
     is_staff = graphene.Boolean(
         required=True, description="Determine if the user is a staff admin."
     )
@@ -318,6 +391,10 @@ class User(ModelObjectType[models.User]):
     )
     addresses = NonNullList(
         Address, description="List of all user's addresses.", required=True
+    )
+    supplier = graphene.Field(
+        Supplier,
+        description="Returns the last Supplier of this user.",
     )
     checkout = graphene.Field(
         Checkout,
@@ -534,6 +611,10 @@ class User(ModelObjectType[models.User]):
         return (
             GiftCardsByUserLoader(info.context).load(root.id).then(_resolve_gift_cards)
         )
+
+    @staticmethod
+    def resolve_supplier(root: models.User, _info: ResolveInfo):
+        return get_user_supplier(root)
 
     @staticmethod
     def resolve_user_permissions(root: models.User, _info: ResolveInfo):
@@ -961,3 +1042,5 @@ class GroupCountableConnection(CountableConnection):
     class Meta:
         doc_category = DOC_CATEGORY_USERS
         node = Group
+
+

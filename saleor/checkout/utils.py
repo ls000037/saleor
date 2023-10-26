@@ -49,7 +49,6 @@ if TYPE_CHECKING:
     from ..order.models import Order
     from .fetch import CheckoutInfo, CheckoutLineInfo
 
-
 PRIVATE_META_APP_SHIPPING_ID = "external_app_shipping_id"
 
 
@@ -789,7 +788,6 @@ def get_valid_internal_shipping_methods_for_checkout(
         return []
     if not checkout_info.shipping_address:
         return []
-
     shipping_methods = ShippingMethod.objects.applicable_shipping_methods_for_instance(
         checkout_info.checkout,
         channel_id=checkout_info.checkout.channel_id,

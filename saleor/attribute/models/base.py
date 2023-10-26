@@ -14,6 +14,7 @@ from ...permission.enums import PageTypePermissions, ProductTypePermissions
 from ...permission.utils import has_one_of_permissions
 from ...product.models import Product, ProductType, ProductVariant
 from .. import AttributeEntityType, AttributeInputType, AttributeType
+from ...account.models import Supplier
 
 if TYPE_CHECKING:
     from ...account.models import User
@@ -145,6 +146,10 @@ class Attribute(ModelWithMetadata, ModelWithExternalReference):
         related_name="page_attributes",
         through="AttributePage",
         through_fields=("attribute", "page_type"),
+    )
+    supplier = models.ForeignKey(
+        Supplier, related_name="attributes", null=True, blank=True,
+        on_delete=models.CASCADE
     )
 
     unit = models.CharField(

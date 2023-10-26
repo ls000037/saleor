@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional
 
 import graphene
+
 from django.core.exceptions import ValidationError
 
 from ...core.exceptions import InsufficientStock

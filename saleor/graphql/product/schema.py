@@ -441,7 +441,6 @@ class ProductQueries(graphene.ObjectType):
     def resolve_products(_root, info: ResolveInfo, *, channel=None, **kwargs):
         check_for_sorting_by_rank(info, kwargs)
         search = kwargs.get("search")
-
         requestor = get_user_or_app_from_context(info.context)
         has_required_permissions = has_one_of_permissions(
             requestor, ALL_PRODUCTS_PERMISSIONS

@@ -130,6 +130,10 @@ class ProductType(ModelWithMetadata):
     has_variants = models.BooleanField(default=True)
     is_shipping_required = models.BooleanField(default=True)
     is_digital = models.BooleanField(default=False)
+    supplier = models.ForeignKey(
+        'account.Supplier', related_name="product_types", null=True, blank=True,
+        on_delete=models.CASCADE
+    )
     weight = MeasurementField(
         measurement=Weight,
         unit_choices=WeightUnits.CHOICES,
@@ -193,6 +197,13 @@ class Product(SeoModel, ModelWithMetadata, ModelWithExternalReference):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+    )
+    supplier = models.ForeignKey(
+        'account.Supplier',
+        related_name="product",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
     )
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)

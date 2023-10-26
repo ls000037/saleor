@@ -1743,7 +1743,6 @@ class PluginsManager(PaymentInterface):
             for plugin in plugins
             if hasattr(plugin, "get_shipping_methods_for_checkout")
         ]
-
         shipping_methods = []
         for plugin in shipping_plugins:
             shipping_methods.extend(

@@ -30,6 +30,7 @@ from ....meta.inputs import MetadataInput
 from ....plugins.dataloaders import get_plugin_manager_promise
 from ...types import Product
 from ..utils import clean_tax_code
+from .....account.models import Supplier
 
 
 class ProductInput(BaseInputObjectType):
@@ -117,6 +118,7 @@ class ProductCreateInput(ProductInput):
         name="productType",
         required=True,
     )
+    supplier = graphene.ID(description="ID of the product's supplier.")
 
     class Meta:
         doc_category = DOC_CATEGORY_PRODUCTS
@@ -152,7 +154,9 @@ class ProductCreate(ModelMutation):
     @classmethod
     def clean_input(cls, info: ResolveInfo, instance, data, **kwargs):
         cleaned_input = super().clean_input(info, instance, data, **kwargs)
-
+        # 商品创建默认添加到平台供应商
+        if not cleaned_input.get("supplier"):
+            cleaned_input["supplier"] = Supplier.get_default_supplier()
         if "description" in cleaned_input:
             description = cleaned_input["description"]
             cleaned_input["description_plaintext"] = (

@@ -249,8 +249,8 @@ class CheckoutLine(ModelObjectType[models.CheckoutLine]):
     problems = NonNullList(
         CheckoutLineProblem,
         description="List of problems with the checkout line."
-        + ADDED_IN_315
-        + PREVIEW_FEATURE,
+                    + ADDED_IN_315
+                    + PREVIEW_FEATURE,
     )
 
     class Meta:

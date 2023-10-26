@@ -58,6 +58,7 @@ from . import (
 )
 from .fetch import OrderLineInfo
 from .models import Order, OrderGrantedRefund, OrderLine
+import string, random
 
 if TYPE_CHECKING:
     from ..app.models import App
@@ -95,6 +96,13 @@ def order_needs_automatic_fulfillment(lines_data: Iterable["OrderLineInfo"]) -> 
         if line_data.is_digital and order_line_needs_automatic_fulfillment(line_data):
             return True
     return False
+
+
+# 生成指定位数的数字
+def generate_random_num(length=6):
+    chars = string.digits
+    code = ''.join(random.choice(chars) for _ in range(length))
+    return code
 
 
 def update_voucher_discount(func):
@@ -998,8 +1006,8 @@ def update_order_authorize_status(order: Order, granted_refund_amount: Decimal):
     The order is not authorized when total_authorized and total_charged funds are 0.
     """
     total_covered = (
-        order.total_authorized_amount + order.total_charged_amount
-    ) or Decimal(0)
+                        order.total_authorized_amount + order.total_charged_amount
+                    ) or Decimal(0)
     total_covered = quantize_price(total_covered, order.currency)
     current_total_gross = order.total_gross_amount - granted_refund_amount
     current_total_gross = max(current_total_gross, Decimal("0"))

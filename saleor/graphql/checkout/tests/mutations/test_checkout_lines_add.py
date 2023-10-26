@@ -213,7 +213,6 @@ def test_add_to_existing_line_with_sale_when_checkout_has_voucher(
     expected_discount_per_single_item = Decimal(25)
     content = get_graphql_content(response)
     data = content["data"]["checkoutLinesAdd"]
-    print(data)
     assert not data["errors"]
     checkout.refresh_from_db()
     lines, _ = fetch_checkout_lines(checkout)
@@ -996,7 +995,7 @@ def test_checkout_lines_add_with_available_for_purchase_from_tomorrow_product(
     product = stock.product_variant.product
     product.channel_listings.update(
         available_for_purchase_at=datetime.datetime.now(pytz.UTC)
-        + datetime.timedelta(days=1)
+                                  + datetime.timedelta(days=1)
     )
 
     variant_id = graphene.Node.to_global_id("ProductVariant", variant.pk)

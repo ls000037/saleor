@@ -67,3 +67,19 @@ class CheckoutAuthorizeStatus:
         (PARTIAL, "The checkout is partially authorized"),
         (FULL, "The checkout is fully authorized"),
     ]
+
+class CheckoutLineKey(object):
+    VARIANT_KEY = "variant"  # 商品
+    QUANTITY_KEY = "quantity"  # 数量
+    UNIT_PRICE_KEY = "unit_price"  # 单价
+    PRODUCT_TYPE_KEY = "product_type"  # 商品类型
+    VOUCHERS_KEY = "vouchers"  # 优惠券列表
+    SUPPLIER_TOTAL_PRICE_KEY = "supplier_total_price"  # 原订单总结
+    SUPPLIER_DISCOUNT_LINE_VALUE_KEY = "supplier_discount_line_value"  # order_line供应商优惠金额
+    PLATFORM_DISCOUNT_LINE_VALUE_KEY = "platform_discount_line_value"  # order_line平台优惠金额
+    SUPPLIER_DISCOUNT_TOTAL_VALUE_KEY = "supplier_discount_total_value"  # 供应商订单总优惠
+    PLATFORM_DISCOUNT_TOTAL_VALUE_KEY = "platform_discount_total_value"  # 平台订单总优惠
+    AFTER_DISCOUNT_TOTAL_PRICE_KEY = "after_discount_total_price"  # 优惠后订单总价
+    UNIT_AFTER_DISCOUNT_PRICE_KEY = "unit_after_discount_price"  # 优惠后单价
+    SUPPLIER_VOUCHER_APPLY_KEY = "supplier_voucher_apply"  # 供应商是否参与优惠
+    PLATFORM_VOUCHER_APPLY_KEY = "platform_voucher_apply"  # 平台是否参与优惠

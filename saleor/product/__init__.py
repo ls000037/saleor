@@ -14,8 +14,10 @@ class ProductMediaTypes:
 class ProductTypeKind:
     NORMAL = "normal"
     GIFT_CARD = "gift_card"
+    OTHER = "other"
 
     CHOICES = [
         (NORMAL, "A standard product type."),
         (GIFT_CARD, "A gift card product type."),
+        (OTHER, "Other product type."),
     ]

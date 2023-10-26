@@ -2,7 +2,7 @@ from .account_address_create import AccountAddressCreate
 from .account_address_delete import AccountAddressDelete
 from .account_address_update import AccountAddressUpdate
 from .account_delete import AccountDelete
-from .account_register import AccountRegister
+from .account_register import AccountRegister,SupplierCreate,SupplierDelete,SupplierUpdate
 from .account_request_deletion import AccountRequestDeletion
 from .account_set_default_address import AccountSetDefaultAddress
 from .account_update import AccountUpdate
@@ -24,4 +24,7 @@ __all__ = [
     "ConfirmEmailChange",
     "RequestEmailChange",
     "SendConfirmationEmail",
+    "SupplierCreate",
+    "SupplierUpdate",
+    "SupplierDelete"
 ]

@@ -21,12 +21,13 @@ from ....warehouse.reservations import is_reservation_enabled
 from ....webhook.event_types import WebhookEventAsyncType
 from ...account.i18n import I18nMixin
 from ...account.types import AddressInput
+from ....account.models import Address
 from ...core.descriptions import ADDED_IN_34, ADDED_IN_35, DEPRECATED_IN_3X_INPUT
 from ...core.doc_category import DOC_CATEGORY_CHECKOUT
 from ...core.mutations import BaseMutation
 from ...core.scalars import UUID
 from ...core.types import CheckoutError
-from ...core.utils import WebhookEventInfo
+from ...core.utils import WebhookEventInfo, from_global_id_or_error
 from ...plugins.dataloaders import get_plugin_manager_promise
 from ...site.dataloaders import get_site_promise
 from ..types import Checkout
@@ -61,8 +62,14 @@ class CheckoutShippingAddressUpdate(AddressMetadataMixin, BaseMutation, I18nMixi
             ),
         )
         shipping_address = AddressInput(
-            required=True,
+            required=False,
             description="The mailing address to where the checkout will be shipped.",
+        )
+        shipping_address_id = graphene.ID(
+            required=False,
+            description=(
+                f"The ID of the address."
+            ),
         )
         validation_rules = CheckoutAddressValidationRules(
             required=False,
@@ -119,7 +126,8 @@ class CheckoutShippingAddressUpdate(AddressMetadataMixin, BaseMutation, I18nMixi
         _root,
         info,
         /,
-        shipping_address,
+        shipping_address=None,
+        shipping_address_id=None,
         validation_rules=None,
         checkout_id=None,
         token=None,
@@ -142,28 +150,33 @@ class CheckoutShippingAddressUpdate(AddressMetadataMixin, BaseMutation, I18nMixi
         lines, _ = fetch_checkout_lines(
             checkout,
         )
-
-        if use_legacy_error_flow_for_checkout and not is_shipping_required(lines):
-            raise ValidationError(
-                {
-                    "shipping_address": ValidationError(
-                        ERROR_DOES_NOT_SHIP,
-                        code=CheckoutErrorCode.SHIPPING_NOT_REQUIRED.value,
-                    )
-                }
-            )
+        # 去除购物车的是否邮寄验证
+        # if use_legacy_error_flow_for_checkout and not is_shipping_required(lines):
+        #     raise ValidationError(
+        #         {
+        #             "shipping_address": ValidationError(
+        #                 ERROR_DOES_NOT_SHIP,
+        #                 code=CheckoutErrorCode.SHIPPING_NOT_REQUIRED.value,
+        #             )
+        #         }
+        #     )
         address_validation_rules = validation_rules or {}
-        shipping_address_instance = cls.validate_address(
-            shipping_address,
-            address_type=AddressType.SHIPPING,
-            instance=checkout.shipping_address,
-            info=info,
-            format_check=address_validation_rules.get("check_fields_format", True),
-            required_check=address_validation_rules.get("check_required_fields", True),
-            enable_normalization=address_validation_rules.get(
-                "enable_fields_normalization", True
-            ),
-        )
+        if shipping_address:
+            shipping_address_instance = cls.validate_address(
+                shipping_address,
+                address_type=AddressType.SHIPPING,
+                instance=checkout.shipping_address,
+                info=info,
+                format_check=address_validation_rules.get("check_fields_format", True),
+                required_check=address_validation_rules.get("check_required_fields",
+                                                            True),
+                enable_normalization=address_validation_rules.get(
+                    "enable_fields_normalization", True
+                ),
+            )
+        if shipping_address_id:
+            shipping_address_instance = Address.objects.get(
+                id=from_global_id_or_error(shipping_address_id)[1])
         manager = get_plugin_manager_promise(info.context).get()
         shipping_channel_listings = checkout.channel.shipping_method_listings.all()
         checkout_info = fetch_checkout_info(
@@ -200,7 +213,7 @@ class CheckoutShippingAddressUpdate(AddressMetadataMixin, BaseMutation, I18nMixi
         )
         checkout.save(
             update_fields=shipping_address_updated_fields
-            + invalidate_prices_updated_fields
+                          + invalidate_prices_updated_fields
         )
 
         cls.call_event(manager.checkout_updated, checkout)

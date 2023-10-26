@@ -22,21 +22,22 @@ from ..descriptions import AttributeDescriptions, AttributeValueDescriptions
 from ..enums import AttributeEntityTypeEnum, AttributeInputTypeEnum, AttributeTypeEnum
 from ..types import Attribute
 from .mixins import AttributeMixin
+from ....account.models import Supplier
 
 
 class AttributeValueInput(BaseInputObjectType):
     value = graphene.String(description=AttributeValueDescriptions.VALUE)
     rich_text = JSONString(
         description=AttributeValueDescriptions.RICH_TEXT
-        + DEPRECATED_IN_3X_INPUT
-        + "The rich text attribute hasn't got predefined value, so can be specified "
-        "only from instance that supports the given attribute."
+                    + DEPRECATED_IN_3X_INPUT
+                    + "The rich text attribute hasn't got predefined value, so can be specified "
+                      "only from instance that supports the given attribute."
     )
     plain_text = graphene.String(
         description=AttributeValueDescriptions.PLAIN_TEXT
-        + DEPRECATED_IN_3X_INPUT
-        + "The plain text attribute hasn't got predefined value, so can be specified "
-        "only from instance that supports the given attribute."
+                    + DEPRECATED_IN_3X_INPUT
+                    + "The plain text attribute hasn't got predefined value, so can be specified "
+                      "only from instance that supports the given attribute."
     )
     file_url = graphene.String(
         required=False,
@@ -78,7 +79,7 @@ class AttributeCreateInput(BaseInputObjectType):
     )
     filterable_in_storefront = graphene.Boolean(
         description=AttributeDescriptions.FILTERABLE_IN_STOREFRONT
-        + DEPRECATED_IN_3X_INPUT
+                    + DEPRECATED_IN_3X_INPUT
     )
     filterable_in_dashboard = graphene.Boolean(
         description=AttributeDescriptions.FILTERABLE_IN_DASHBOARD
@@ -86,7 +87,7 @@ class AttributeCreateInput(BaseInputObjectType):
     storefront_search_position = graphene.Int(
         required=False,
         description=AttributeDescriptions.STOREFRONT_SEARCH_POSITION
-        + DEPRECATED_IN_3X_INPUT,
+                    + DEPRECATED_IN_3X_INPUT,
     )
     available_in_grid = graphene.Boolean(
         required=False,
@@ -95,6 +96,7 @@ class AttributeCreateInput(BaseInputObjectType):
     external_reference = graphene.String(
         description="External ID of this attribute." + ADDED_IN_310, required=False
     )
+    supplier = graphene.ID(required=False, description="ID of the product's supplier.")
 
     class Meta:
         doc_category = DOC_CATEGORY_ATTRIBUTES
@@ -134,6 +136,10 @@ class AttributeCreate(AttributeMixin, ModelMutation):
     @classmethod
     def clean_input(cls, info: ResolveInfo, instance, data, **kwargs):
         cleaned_input = super().clean_input(info, instance, data, **kwargs)
+        # 属性创建默认添加到平台供应商
+        if not cleaned_input.get("supplier"):
+            cleaned_input["supplier"] = Supplier.get_default_supplier()
+
         if cleaned_input.get(
             "input_type"
         ) == AttributeInputType.REFERENCE and not cleaned_input.get("entity_type"):
